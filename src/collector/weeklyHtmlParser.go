@@ -116,7 +116,7 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 	}
 
 	var collection = new(wdata.WeatherInfoCollection)
-	collection.Weathers = map[string]*wdata.WeeklyWeatherInfo{}
+	collection.Weathers = map[string]*wdata.WeatherInfo{}
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
 		if tokenType == html.EndTagToken && token.Data == common.HtmlTagTableBody {
@@ -132,7 +132,7 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 					collection.SetDate(parseDate(tokenizer))
 				}
 			} else {
-				var info = new(wdata.WeeklyWeatherInfo)
+				var info = new(wdata.WeatherInfo)
 				info.City = parseCity(tokenizer)
 				dayWeatherData, nightWeatherData := parseWeatherData(tokenizer)
 				info.DayWeathers = dayWeatherData
@@ -144,7 +144,7 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 	return collection
 }
 
-func parseHTML(r io.Reader) *wdata.WeatherInfoCollection {
+func parseWeeklyHTML(r io.Reader) *wdata.WeatherInfoCollection {
 	tokenizer := html.NewTokenizer(r)
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()

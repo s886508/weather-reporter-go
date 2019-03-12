@@ -7,4 +7,6 @@ const (
 	HtmlTagTh        = "th"
 	HtmlTagTd        = "td"
 	HtmlTagImg       = "img"
+	HtmlTagDiv       = "div"
+	HtmlTagLink      = "a"
 )

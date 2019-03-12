@@ -10,20 +10,25 @@ type WeatherDetail struct {
 // WeatherDetailArr represents the next 7 days temperature
 type WeatherDetailArr []*WeatherDetail
 
-// WeeklyWeatherInfo Store weather data by week
-type WeeklyWeatherInfo struct {
+// WeatherInfo Store weather data by week
+type WeatherInfo struct {
 	City          string
 	DayWeathers   WeatherDetailArr
 	NightWeathers WeatherDetailArr
 }
 
+// IsGood return true if all data is filled
+func (detail *WeatherDetail) IsGood() bool {
+	return len([]rune(detail.Temperature)) > 0 && len([]rune(detail.Status)) > 0 && len([]rune(detail.RainingRate)) > 0
+}
+
 // SetCity set the city name.
-func (info *WeeklyWeatherInfo) SetCity(c string) {
+func (info *WeatherInfo) SetCity(c string) {
 	info.City = c
 }
 
 // SetData set the weather information from queried data.
-func (info *WeeklyWeatherInfo) SetData(d WeatherDetailArr, n WeatherDetailArr) {
+func (info *WeatherInfo) SetData(d WeatherDetailArr, n WeatherDetailArr) {
 	for index, val := range d {
 		info.DayWeathers[index] = val
 	}

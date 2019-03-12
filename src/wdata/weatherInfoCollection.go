@@ -10,7 +10,7 @@ type Dates []string
 // WeatherInfoCollection store a dictionary for collecting all data from website.
 type WeatherInfoCollection struct {
 	Date     Dates
-	Weathers map[string]*WeeklyWeatherInfo
+	Weathers map[string]*WeatherInfo
 }
 
 // HasDate return true if dates already inserted.
@@ -25,12 +25,12 @@ func (collect *WeatherInfoCollection) SetDate(d Dates) {
 }
 
 // Query get weather data for given city name. Return empty data if given city is not found.
-func (collect *WeatherInfoCollection) Query(city string) WeeklyWeatherInfo {
+func (collect *WeatherInfoCollection) Query(city string) WeatherInfo {
 	info, exist := collect.Weathers[city]
 	if exist {
 		return *info
 	}
-	return WeeklyWeatherInfo{}
+	return WeatherInfo{}
 }
 
 // PrettyPrint show data in the console with pretty print.
@@ -39,12 +39,16 @@ func (collect *WeatherInfoCollection) PrettyPrint() {
 	for _, date := range collect.Date {
 		fmt.Printf("%s\t", date)
 	}
-	fmt.Println("")
+	fmt.Println()
 	for key, info := range collect.Weathers {
-		fmt.Printf("%s\t", key)
+		fmt.Printf("%s\n", key)
 		for _, temp := range info.DayWeathers {
 			fmt.Printf("%s:%s\t", temp.Temperature, temp.Status)
 		}
-		fmt.Println("")
+		fmt.Println()
+		for _, temp := range info.NightWeathers {
+			fmt.Printf("%s:%s\t", temp.Temperature, temp.Status)
+		}
+		fmt.Println()
 	}
 }

@@ -20,7 +20,7 @@ func GetWeekData(wait chan int) {
 	defer response.Body.Close()
 
 	// Parse HTML content
-	weatherCollect := parseHTML(response.Body)
+	weatherCollect := parseWeeklyHTML(response.Body)
 	weatherCollect.PrettyPrint()
 
 	// Use channel to tell the function has completed.
