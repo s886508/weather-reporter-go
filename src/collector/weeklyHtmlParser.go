@@ -1,9 +1,9 @@
 package collector
 
 import (
-	"fmt"
 	"io"
 	"strings"
+	"wdata"
 
 	"golang.org/x/net/html"
 )
@@ -17,8 +17,12 @@ const (
 	htmlTagImg       = "img"
 )
 
-func parseDate(tokenizer *html.Tokenizer) []string {
-	var dateTable []string
+func textWanted(text string) bool {
+	return !strings.Contains(text, "白天") && !strings.Contains(text, "晚上") && len([]rune(text)) > 0
+}
+
+func parseDate(tokenizer *html.Tokenizer) wdata.Dates {
+	var dateArr wdata.Dates
 	var date string
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
@@ -28,7 +32,7 @@ func parseDate(tokenizer *html.Tokenizer) []string {
 
 		if tokenType == html.EndTagToken && token.Data == htmlTagTh {
 			if len(date) > 0 {
-				dateTable = append(dateTable, strings.TrimPrefix(date, ":"))
+				dateArr = append(dateArr, strings.TrimPrefix(date, ":"))
 				date = ""
 			}
 			continue
@@ -36,16 +40,16 @@ func parseDate(tokenizer *html.Tokenizer) []string {
 
 		if tokenType == html.TextToken {
 			text := strings.Trim(token.Data, " \n\t")
-			if !strings.Contains(text, "白天") && !strings.Contains(text, "晚上") {
+			if textWanted(text) {
 				date = strings.Join([]string{date, text}, ":")
 			}
 		}
 	}
 
-	return dateTable
+	return dateArr
 }
 
-func parseCityData(tokenizer *html.Tokenizer) string {
+func parseCity(tokenizer *html.Tokenizer) string {
 	tokenType, token := tokenizer.Next(), tokenizer.Token()
 	var city string
 	if tokenType == html.TextToken {
@@ -54,13 +58,10 @@ func parseCityData(tokenizer *html.Tokenizer) string {
 	return city
 }
 
-func parseWeatherData(tokenizer *html.Tokenizer) ([]string, []string) {
-	addToData := func(text string) bool {
-		return strings.Compare(text, "白天") != 0 && strings.Compare(text, "晚上") != 0 && len([]rune(text)) > 0
-	}
+func parseWeatherData(tokenizer *html.Tokenizer) (wdata.Temperatures, wdata.Temperatures) {
 
-	parseDegree := func() []string {
-		var degree []string
+	parseTemperature := func() wdata.Temperatures {
+		var tempArr wdata.Temperatures
 		var text string
 		for {
 			tokenType, token := tokenizer.Next(), tokenizer.Token()
@@ -71,7 +72,7 @@ func parseWeatherData(tokenizer *html.Tokenizer) ([]string, []string) {
 
 			if tokenType == html.EndTagToken && token.Data == htmlTagTd {
 				if len(text) > 0 {
-					degree = append(degree, strings.TrimPrefix(text, ":"))
+					tempArr = append(tempArr, strings.TrimPrefix(text, ":"))
 					text = ""
 				}
 				continue
@@ -84,15 +85,15 @@ func parseWeatherData(tokenizer *html.Tokenizer) ([]string, []string) {
 
 			if tokenType == html.TextToken {
 				data := strings.Trim(token.Data, " \n\t")
-				if addToData(data) {
+				if textWanted(data) {
 					text = strings.Join([]string{text, strings.Trim(data, " \n\t")}, ":")
 				}
 			}
 		}
-		return degree
+		return tempArr
 	}
 
-	var dayWeather, nightWeather []string
+	var dayWeather, nightWeather wdata.Temperatures
 	for {
 		if len(dayWeather) == 7 && len(nightWeather) == 7 {
 			break
@@ -101,18 +102,18 @@ func parseWeatherData(tokenizer *html.Tokenizer) ([]string, []string) {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
 
 		if tokenType == html.StartTagToken && token.Data == htmlTagTd {
-			dayWeather = parseDegree()
+			dayWeather = parseTemperature()
 		}
 
 		if tokenType == html.StartTagToken && token.Data == htmlTagTd {
-			nightWeather = parseDegree()
+			nightWeather = parseTemperature()
 		}
 	}
 
 	return dayWeather, nightWeather
 }
 
-func parseWeeklyData(tokenizer *html.Tokenizer) {
+func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 	traversToTHTag := func() html.Token {
 		var token html.Token
 		tokenType := html.ErrorToken
@@ -122,7 +123,8 @@ func parseWeeklyData(tokenizer *html.Tokenizer) {
 		return token
 	}
 
-	var weekDates []string
+	var collection = new(wdata.WeatherInfoCollection)
+	collection.Weathers = map[string]*wdata.WeeklyWeatherInfo{}
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
 		if tokenType == html.EndTagToken && token.Data == htmlTagTableBody {
@@ -134,27 +136,28 @@ func parseWeeklyData(tokenizer *html.Tokenizer) {
 			token = traversToTHTag()
 
 			if len(token.Attr) == 1 {
-				if len(weekDates) == 0 {
-					weekDates = parseDate(tokenizer)
+				if collection.HasDate() == false {
+					collection.SetDate(parseDate(tokenizer))
 				}
 			} else {
-				city := parseCityData(tokenizer)
+				var info = new(wdata.WeeklyWeatherInfo)
+				info.City = parseCity(tokenizer)
 				dayWeatherData, nightWeatherData := parseWeatherData(tokenizer)
-				fmt.Println(city)
-				fmt.Println(dayWeatherData)
-				fmt.Println(nightWeatherData)
+				info.DayData = dayWeatherData
+				info.NightData = nightWeatherData
+				collection.Weathers[info.City] = info
 			}
 		}
 	}
+	return collection
 }
 
-func parseHTML(r io.Reader) {
+func parseHTML(r io.Reader) *wdata.WeatherInfoCollection {
 	tokenizer := html.NewTokenizer(r)
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
 		if tokenType == html.StartTagToken && token.Data == htmlTagTable {
-			parseWeeklyData(tokenizer)
-			break
+			return parseWeeklyData(tokenizer)
 		}
 
 		if tokenType == html.ErrorToken {
@@ -165,4 +168,5 @@ func parseHTML(r io.Reader) {
 			}
 		}
 	}
+	return nil
 }
