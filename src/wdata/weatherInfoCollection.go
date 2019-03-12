@@ -42,8 +42,8 @@ func (collect *WeatherInfoCollection) PrettyPrint() {
 	fmt.Println("")
 	for key, info := range collect.Weathers {
 		fmt.Printf("%s\t", key)
-		for _, temp := range info.DayData {
-			fmt.Printf("%s\t", temp)
+		for _, temp := range info.DayWeathers {
+			fmt.Printf("%s:%s\t", temp.Temperature, temp.Status)
 		}
 		fmt.Println("")
 	}

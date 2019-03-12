@@ -58,11 +58,11 @@ func parseCity(tokenizer *html.Tokenizer) string {
 	return city
 }
 
-func parseWeatherData(tokenizer *html.Tokenizer) (wdata.Temperatures, wdata.Temperatures) {
+func parseWeatherData(tokenizer *html.Tokenizer) (wdata.WeatherDetailArr, wdata.WeatherDetailArr) {
 
-	parseTemperature := func() wdata.Temperatures {
-		var tempArr wdata.Temperatures
-		var text string
+	parseTemperature := func() wdata.WeatherDetailArr {
+		var detailArr wdata.WeatherDetailArr
+		detail := new(wdata.WeatherDetail)
 		for {
 			tokenType, token := tokenizer.Next(), tokenizer.Token()
 			// Break when parsing to </tr>
@@ -71,29 +71,29 @@ func parseWeatherData(tokenizer *html.Tokenizer) (wdata.Temperatures, wdata.Temp
 			}
 
 			if tokenType == html.EndTagToken && token.Data == htmlTagTd {
-				if len(text) > 0 {
-					tempArr = append(tempArr, strings.TrimPrefix(text, ":"))
-					text = ""
+				if len(detail.Temperature) > 0 && len(detail.Status) > 0 {
+					detailArr = append(detailArr, detail)
+					detail = new(wdata.WeatherDetail)
 				}
 				continue
 			}
 
 			if tokenType == html.SelfClosingTagToken && token.Data == htmlTagImg {
-				text = strings.Join([]string{text, strings.Trim(token.Attr[2].Val, " \n\t")}, ":")
+				detail.Status = strings.Trim(token.Attr[2].Val, " \n\t")
 				continue
 			}
 
 			if tokenType == html.TextToken {
 				data := strings.Trim(token.Data, " \n\t")
 				if textWanted(data) {
-					text = strings.Join([]string{text, strings.Trim(data, " \n\t")}, ":")
+					detail.Temperature = strings.Trim(data, " \n\t")
 				}
 			}
 		}
-		return tempArr
+		return detailArr
 	}
 
-	var dayWeather, nightWeather wdata.Temperatures
+	var dayWeather, nightWeather wdata.WeatherDetailArr
 	for {
 		if len(dayWeather) == 7 && len(nightWeather) == 7 {
 			break
@@ -143,8 +143,8 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 				var info = new(wdata.WeeklyWeatherInfo)
 				info.City = parseCity(tokenizer)
 				dayWeatherData, nightWeatherData := parseWeatherData(tokenizer)
-				info.DayData = dayWeatherData
-				info.NightData = nightWeatherData
+				info.DayWeathers = dayWeatherData
+				info.NightWeathers = nightWeatherData
 				collection.Weathers[info.City] = info
 			}
 		}
