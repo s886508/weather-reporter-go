@@ -1,20 +1,12 @@
 package collector
 
 import (
+	"common"
 	"io"
 	"strings"
 	"wdata"
 
 	"golang.org/x/net/html"
-)
-
-const (
-	htmlTagTableBody = "tbody"
-	htmlTagTable     = "table"
-	htmlTagTr        = "tr"
-	htmlTagTh        = "th"
-	htmlTagTd        = "td"
-	htmlTagImg       = "img"
 )
 
 func textWanted(text string) bool {
@@ -26,11 +18,11 @@ func parseDate(tokenizer *html.Tokenizer) wdata.Dates {
 	var date string
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
-		if tokenType == html.EndTagToken && token.Data == htmlTagTr {
+		if tokenType == html.EndTagToken && token.Data == common.HtmlTagTr {
 			break
 		}
 
-		if tokenType == html.EndTagToken && token.Data == htmlTagTh {
+		if tokenType == html.EndTagToken && token.Data == common.HtmlTagTh {
 			if len(date) > 0 {
 				dateArr = append(dateArr, strings.TrimPrefix(date, ":"))
 				date = ""
@@ -66,11 +58,11 @@ func parseWeatherData(tokenizer *html.Tokenizer) (wdata.WeatherDetailArr, wdata.
 		for {
 			tokenType, token := tokenizer.Next(), tokenizer.Token()
 			// Break when parsing to </tr>
-			if tokenType == html.EndTagToken && token.Data == htmlTagTr {
+			if tokenType == html.EndTagToken && token.Data == common.HtmlTagTr {
 				break
 			}
 
-			if tokenType == html.EndTagToken && token.Data == htmlTagTd {
+			if tokenType == html.EndTagToken && token.Data == common.HtmlTagTd {
 				if len(detail.Temperature) > 0 && len(detail.Status) > 0 {
 					detailArr = append(detailArr, detail)
 					detail = new(wdata.WeatherDetail)
@@ -78,7 +70,7 @@ func parseWeatherData(tokenizer *html.Tokenizer) (wdata.WeatherDetailArr, wdata.
 				continue
 			}
 
-			if tokenType == html.SelfClosingTagToken && token.Data == htmlTagImg {
+			if tokenType == html.SelfClosingTagToken && token.Data == common.HtmlTagImg {
 				detail.Status = strings.Trim(token.Attr[2].Val, " \n\t")
 				continue
 			}
@@ -101,11 +93,11 @@ func parseWeatherData(tokenizer *html.Tokenizer) (wdata.WeatherDetailArr, wdata.
 
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
 
-		if tokenType == html.StartTagToken && token.Data == htmlTagTd {
+		if tokenType == html.StartTagToken && token.Data == common.HtmlTagTd {
 			dayWeather = parseTemperature()
 		}
 
-		if tokenType == html.StartTagToken && token.Data == htmlTagTd {
+		if tokenType == html.StartTagToken && token.Data == common.HtmlTagTd {
 			nightWeather = parseTemperature()
 		}
 	}
@@ -117,7 +109,7 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 	traversToTHTag := func() html.Token {
 		var token html.Token
 		tokenType := html.ErrorToken
-		for token.Data != htmlTagTh && tokenType != html.StartTagToken {
+		for token.Data != common.HtmlTagTh && tokenType != html.StartTagToken {
 			tokenType, token = tokenizer.Next(), tokenizer.Token()
 		}
 		return token
@@ -127,11 +119,11 @@ func parseWeeklyData(tokenizer *html.Tokenizer) *wdata.WeatherInfoCollection {
 	collection.Weathers = map[string]*wdata.WeeklyWeatherInfo{}
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
-		if tokenType == html.EndTagToken && token.Data == htmlTagTableBody {
+		if tokenType == html.EndTagToken && token.Data == common.HtmlTagTableBody {
 			break
 		}
 
-		if tokenType == html.StartTagToken && token.Data == htmlTagTr {
+		if tokenType == html.StartTagToken && token.Data == common.HtmlTagTr {
 			// Check first child <th> tag for checking what the row stands for.
 			token = traversToTHTag()
 
@@ -156,7 +148,7 @@ func parseHTML(r io.Reader) *wdata.WeatherInfoCollection {
 	tokenizer := html.NewTokenizer(r)
 	for {
 		tokenType, token := tokenizer.Next(), tokenizer.Token()
-		if tokenType == html.StartTagToken && token.Data == htmlTagTable {
+		if tokenType == html.StartTagToken && token.Data == common.HtmlTagTable {
 			return parseWeeklyData(tokenizer)
 		}
 
