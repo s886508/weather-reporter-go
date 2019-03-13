@@ -43,32 +43,21 @@ func (collect *WeatherInfoCollection) Query(city string) WeatherInfo {
 func (collect *WeatherInfoCollection) Print(city string, days int32, verbose bool) {
 	if info, exist := collect.Weathers[city]; exist {
 		days = common.Min(common.Max(1, days), 7)
-		fmt.Printf("============ %s ============\n", city)
-		fmt.Print("\t")
+		text := fmt.Sprintf("============ %s ============\n\n", city)
+
 		for index := int32(0); index < days; index++ {
-			fmt.Printf("%s\t", collect.Date[index])
-		}
-		fmt.Println()
-		fmt.Printf("%s\t", day)
-		for index := int32(0); index < days; index++ {
-			detail := info.DayWeathers[index]
-			fmt.Printf("%s", detail.Temperature)
+			date := collect.Date[index]
+			dayDetail, nightDetail := info.DayWeathers[index], info.NightWeathers[index]
+			dayTemp, nightTemp := fmt.Sprintf("%s:%s°C", day, dayDetail.Temperature), fmt.Sprintf("%s:%s°C", night, nightDetail.Temperature)
 			if verbose {
-				fmt.Printf(":%s", detail.Status)
+				dayTemp += ":" + dayDetail.Status
+				nightTemp += ":" + nightDetail.Status
 			}
-			fmt.Print("\t")
+			text += fmt.Sprintf("%-15s%-30s\n", date, dayTemp)
+			text += fmt.Sprintf("%-15s%-30s\n\n", date, nightTemp)
 		}
-		fmt.Println()
-		fmt.Printf("%s\t", night)
-		for index := int32(0); index < days; index++ {
-			detail := info.NightWeathers[index]
-			fmt.Printf("%s", detail.Temperature)
-			if verbose {
-				fmt.Printf(":%s", detail.Status)
-			}
-			fmt.Print("\t")
-		}
-		fmt.Println()
+		text += fmt.Sprintf("============ %s ============\n", city)
+		fmt.Print(text)
 	} else {
 		if days <= 0 {
 			fmt.Println("Please input correct days")
@@ -79,31 +68,8 @@ func (collect *WeatherInfoCollection) Print(city string, days int32, verbose boo
 }
 
 // PrintAll show data in the console with pretty print.
-func (collect *WeatherInfoCollection) PrintAll(verbose bool) {
-	fmt.Print("\t")
-	for _, date := range collect.Date {
-		fmt.Printf("%s\t", date)
-	}
-	fmt.Println()
-	fmt.Printf("%s\t", day)
-	for key, info := range collect.Weathers {
-		fmt.Printf("%s\n", key)
-		for _, detail := range info.DayWeathers {
-			fmt.Printf("%s", detail.Temperature)
-			if verbose {
-				fmt.Printf(":%s", detail.Status)
-			}
-			fmt.Print("\t")
-		}
-		fmt.Println()
-		fmt.Printf("%s\t", night)
-		for _, detail := range info.NightWeathers {
-			fmt.Printf("%s", detail.Temperature)
-			if verbose {
-				fmt.Printf(":%s", detail.Status)
-			}
-			fmt.Print("\t")
-		}
-		fmt.Println()
+func (collect *WeatherInfoCollection) PrintAll(days int32, verbose bool) {
+	for city := range collect.Weathers {
+		collect.Print(city, days, verbose)
 	}
 }

@@ -37,8 +37,9 @@ func main() {
 			days = int(d)
 		}
 
-		collector.PrintWeatherData(city, int32(days), false)
+		collector.PrintWeatherData(city, int32(days), true)
 	}
 
 	collector.Stop()
+	fmt.Println("ByeBye~")
 }

@@ -86,7 +86,7 @@ func PrintWeatherData(city string, days int32, verbose bool) {
 	if collection != nil {
 		switch strings.Compare(city, "all") {
 		case 0:
-			collection.PrintAll(verbose)
+			collection.PrintAll(days, verbose)
 		default:
 			collection.Print(city, days, verbose)
 		}
