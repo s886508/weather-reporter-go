@@ -33,7 +33,7 @@ func parseDate(tokenizer *html.Tokenizer) wdata.Dates {
 		if tokenType == html.TextToken {
 			text := strings.Trim(token.Data, " \n\t")
 			if textWanted(text) {
-				date = strings.Join([]string{date, text}, ":")
+				date = strings.Join([]string{date, text}, " ")
 			}
 		}
 	}

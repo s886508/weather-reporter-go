@@ -1,7 +1,13 @@
 package wdata
 
 import (
+	"common"
 	"fmt"
+)
+
+const (
+	day   string = "白天"
+	night string = "晚上"
 )
 
 // Dates represents the array of next 7 dates
@@ -33,21 +39,70 @@ func (collect *WeatherInfoCollection) Query(city string) WeatherInfo {
 	return WeatherInfo{}
 }
 
-// PrettyPrint show data in the console with pretty print.
-func (collect *WeatherInfoCollection) PrettyPrint() {
-	fmt.Print("City\t")
+// Print print the given city weather data to console.
+func (collect *WeatherInfoCollection) Print(city string, days int32, verbose bool) {
+	if info, exist := collect.Weathers[city]; exist {
+		days = common.Min(common.Max(1, days), 7)
+		fmt.Printf("============ %s ============\n", city)
+		fmt.Print("\t")
+		for index := int32(0); index < days; index++ {
+			fmt.Printf("%s\t", collect.Date[index])
+		}
+		fmt.Println()
+		fmt.Printf("%s\t", day)
+		for index := int32(0); index < days; index++ {
+			detail := info.DayWeathers[index]
+			fmt.Printf("%s", detail.Temperature)
+			if verbose {
+				fmt.Printf(":%s", detail.Status)
+			}
+			fmt.Print("\t")
+		}
+		fmt.Println()
+		fmt.Printf("%s\t", night)
+		for index := int32(0); index < days; index++ {
+			detail := info.NightWeathers[index]
+			fmt.Printf("%s", detail.Temperature)
+			if verbose {
+				fmt.Printf(":%s", detail.Status)
+			}
+			fmt.Print("\t")
+		}
+		fmt.Println()
+	} else {
+		if days <= 0 {
+			fmt.Println("Please input correct days")
+		} else {
+			fmt.Println("Cannot find any data.")
+		}
+	}
+}
+
+// PrintAll show data in the console with pretty print.
+func (collect *WeatherInfoCollection) PrintAll(verbose bool) {
+	fmt.Print("\t")
 	for _, date := range collect.Date {
 		fmt.Printf("%s\t", date)
 	}
 	fmt.Println()
+	fmt.Printf("%s\t", day)
 	for key, info := range collect.Weathers {
 		fmt.Printf("%s\n", key)
-		for _, temp := range info.DayWeathers {
-			fmt.Printf("%s:%s\t", temp.Temperature, temp.Status)
+		for _, detail := range info.DayWeathers {
+			fmt.Printf("%s", detail.Temperature)
+			if verbose {
+				fmt.Printf(":%s", detail.Status)
+			}
+			fmt.Print("\t")
 		}
 		fmt.Println()
-		for _, temp := range info.NightWeathers {
-			fmt.Printf("%s:%s\t", temp.Temperature, temp.Status)
+		fmt.Printf("%s\t", night)
+		for _, detail := range info.NightWeathers {
+			fmt.Printf("%s", detail.Temperature)
+			if verbose {
+				fmt.Printf(":%s", detail.Status)
+			}
+			fmt.Print("\t")
 		}
 		fmt.Println()
 	}
