@@ -4,6 +4,7 @@ import (
 	"common"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -46,6 +47,7 @@ func (collect *WeatherInfoCollection) Print(city string, days int32, verbose boo
 		return
 	}
 
+	fmt.Printf("%s\n", time.Now())
 	for key := range collect.Weathers {
 		if !strings.Contains(key, city) {
 			continue
