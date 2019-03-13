@@ -3,6 +3,7 @@ package wdata
 import (
 	"common"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -41,9 +42,18 @@ func (collect *WeatherInfoCollection) Query(city string) WeatherInfo {
 
 // Print print the given city weather data to console.
 func (collect *WeatherInfoCollection) Print(city string, days int32, verbose bool) {
-	if info, exist := collect.Weathers[city]; exist {
+	if len([]rune(city)) == 0 {
+		return
+	}
+
+	for key := range collect.Weathers {
+		if !strings.Contains(key, city) {
+			continue
+		}
+
+		info := collect.Weathers[key]
 		days = common.Min(common.Max(1, days), 7)
-		text := fmt.Sprintf("============ %s ============\n\n", city)
+		text := fmt.Sprintf("============ %s ============\n\n", key)
 
 		for index := int32(0); index < days; index++ {
 			date := collect.Date[index]
@@ -56,14 +66,8 @@ func (collect *WeatherInfoCollection) Print(city string, days int32, verbose boo
 			text += fmt.Sprintf("%-15s%-30s\n", date, dayTemp)
 			text += fmt.Sprintf("%-15s%-30s\n\n", date, nightTemp)
 		}
-		text += fmt.Sprintf("============ %s ============\n", city)
+		text += fmt.Sprintf("============ %s ============\n", key)
 		fmt.Print(text)
-	} else {
-		if days <= 0 {
-			fmt.Println("Please input correct days")
-		} else {
-			fmt.Println("Cannot find any data.")
-		}
 	}
 }
 
